@@ -1,0 +1,82 @@
+{
+  "name": "@ghostspeak/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for querying GhostSpeak agent reputation on Solana. Provides tools for AI agents to query on-chain reputation scores, vote history, and agent discovery.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools.d.ts",
+      "import": "./dist/tools.js"
+    }
+  },
+  "bin": {
+    "ghostspeak-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "build:bundle": "bun build src/index.ts --outdir dist --target node --format esm",
+    "dev": "bun --watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "solana",
+    "reputation",
+    "x402",
+    "ai-agents",
+    "ghostspeak",
+    "trust",
+    "web-of-trust",
+    "claude",
+    "anthropic",
+    "llm",
+    "ai-infrastructure"
+  ],
+  "author": "GhostSpeak Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghostspeak/ghostspeak-protocol.git",
+    "directory": "contracts/mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/ghostspeak/ghostspeak-protocol/issues"
+  },
+  "homepage": "https://ghostspeak.network",
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@solana/web3.js": "^1.95.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {
+    "@solana/web3.js": "^1.90.0"
+  },
+  "peerDependenciesMeta": {
+    "@solana/web3.js": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  }
+}

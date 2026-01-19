@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "types": ["node", "jest"]
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "examples/**/*.ts",
+    "mcp-server/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "target", "mcp-server/examples"]
+}

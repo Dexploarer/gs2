@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ghostspeak": {
+      "command": "node",
+      "args": [
+        "/Users/home/Desktop/gs2/contracts/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "SOLANA_RPC_URL": "https://api.devnet.solana.com"
+      }
+    }
+  }
+}
