@@ -12,7 +12,7 @@ Comprehensive trust infrastructure for the x402 ecosystem combining active endpo
 
 ### Core Framework
 - **Next.js 15.4** - App Router with React Server Components
-- **React 19.1** - With new hooks (useActionState, useOptimistic, use())
+- **React 19.2** - With new hooks (useActionState, useOptimistic, use())
 - **TypeScript 5.9+** - Full type safety
 - **Bun** - Package manager and runtime
 
