@@ -51,11 +51,11 @@ export const getRecentActivity = query({
           ...activity,
           agent: agent
             ? {
-                name: agent.name,
-                address: agent.address,
-                ghostScore: agent.ghostScore,
-                tier: agent.tier,
-              }
+              name: agent.name,
+              address: agent.address,
+              ghostScore: agent.ghostScore,
+              tier: agent.tier,
+            }
             : null,
         }
       })
@@ -107,5 +107,24 @@ export const record = mutation({
       ...args,
       timestamp: Date.now(),
     })
+  },
+})
+
+/**
+ * Get aggregated stats
+ * Used by Endpoint Explorer
+ */
+export const getStats = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx) => {
+    // Aggregate total calls from endpoints table
+    const endpoints = await ctx.db.query('endpoints').collect()
+    const totalCalls = endpoints.reduce((sum, ep) => sum + ep.totalCalls, 0)
+
+    return {
+      totalCalls,
+    }
   },
 })

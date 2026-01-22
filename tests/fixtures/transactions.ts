@@ -14,6 +14,8 @@ export const mockTransaction = {
   timestamp: Date.now() - 3600000,
 }
 
+export type AgentTransactionType = 'payment_received' | 'payment_sent' | 'fee' | 'refund'
+
 export const mockAgentTransaction = {
   _id: 'agent_tx_1_1234567890',
   agentId: 'agents_1_1234567890',
@@ -83,7 +85,11 @@ export const mockTransactionList = [
 ]
 
 // Helper to create transaction with custom properties
-export function createMockTransaction(overrides: Partial<typeof mockAgentTransaction> = {}) {
+type AgentTransactionFixture = Omit<typeof mockAgentTransaction, 'type'> & {
+  type: AgentTransactionType
+}
+
+export function createMockTransaction(overrides: Partial<AgentTransactionFixture> = {}) {
   return {
     ...mockAgentTransaction,
     _id: `agent_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`,

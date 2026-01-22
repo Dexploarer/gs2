@@ -6,15 +6,37 @@ import { WalletProvider } from '@/components/wallet/provider'
 import { SolanaConnectionProvider } from '@/hooks'
 import * as React from 'react'
 
-// Lazy initialization to prevent build-time errors
+const noopWatch = {
+  onUpdate: () => () => {},
+  localQueryResult: () => undefined,
+  localQueryLogs: () => undefined,
+  journal: () => undefined,
+}
+
+const noopPaginatedWatch = {
+  onUpdate: () => () => {},
+  localQueryResult: () => undefined,
+}
+
+const noopConvexClient = {
+  watchQuery: () => noopWatch,
+  watchPaginatedQuery: () => noopPaginatedWatch,
+  mutation: async () => {
+    throw new Error('Convex client not configured')
+  },
+  action: async () => {
+    throw new Error('Convex client not configured')
+  },
+} as unknown as ConvexReactClient
+
 function getConvexClient() {
   if (typeof window === 'undefined') {
-    return null as unknown as ConvexReactClient
+    return noopConvexClient
   }
   const url = process.env.NEXT_PUBLIC_CONVEX_URL
   if (!url) {
     console.warn('NEXT_PUBLIC_CONVEX_URL not set')
-    return null as unknown as ConvexReactClient
+    return noopConvexClient
   }
   return new ConvexReactClient(url)
 }
@@ -32,7 +54,7 @@ const convex = getConvexClient()
  */
 export function Providers(props: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <WalletProvider>
         <SolanaConnectionProvider>
           <ConvexProvider client={convex}>

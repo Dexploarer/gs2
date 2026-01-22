@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,26 +9,18 @@ import { CredentialBadge } from '@/components/agent/credential-badge'
 import { formatDistanceToNow, format } from 'date-fns'
 import Link from 'next/link'
 
-interface CredentialVerificationPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
-
-export default function CredentialVerificationPage({ params }: CredentialVerificationPageProps) {
-  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
-
-  useEffect(() => {
-    params.then(setResolvedParams)
-  }, [params])
+export default function CredentialVerificationPage() {
+  const params = useParams()
+  const idParam = params?.id
+  const id = Array.isArray(idParam) ? idParam[0] : idParam
 
   // Always call useQuery at the top level
   const credential = useQuery(
     api.credentials.get,
-    resolvedParams ? { credentialId: resolvedParams.id } : 'skip'
+    id ? { credentialId: id } : 'skip'
   )
 
-  if (!resolvedParams) {
+  if (!id) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-pulse">
@@ -51,7 +43,7 @@ export default function CredentialVerificationPage({ params }: CredentialVerific
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-2xl font-bold">Credential Not Found</div>
         <p className="text-muted-foreground">
-          No credential found with ID: {resolvedParams?.id}
+          No credential found with ID: {id}
         </p>
         <Link
           href="/observatory"

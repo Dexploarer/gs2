@@ -8,6 +8,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import { mockAgent, mockAgentBronze, mockAgentPlatinum } from '../../fixtures/agents'
 
+type AgentFixture = typeof mockAgent | typeof mockAgentBronze | typeof mockAgentPlatinum
+
 // Mock component for testing (since actual component may have complex dependencies)
 function AgentCard({
   agent,
@@ -15,7 +17,7 @@ function AgentCard({
   showScore = true,
   compact = false,
 }: {
-  agent: typeof mockAgent
+  agent: AgentFixture
   onClick?: () => void
   showScore?: boolean
   compact?: boolean

@@ -43,8 +43,8 @@ describe('Convex Token Staking', () => {
 
       if (tokens.length > 0) {
         const token = tokens[0]
-        expect(token).toHaveProperty('mint')
-        expect(token).toHaveProperty('symbol')
+        expect(token).toHaveProperty('tokenMint')
+        expect(token).toHaveProperty('tokenSymbol')
         expect(token).toHaveProperty('isActive')
         expect(token.isActive).toBe(true)
       }
@@ -59,11 +59,11 @@ describe('Convex Token Staking', () => {
       const tokens = await convex.query(api.tokenStaking.listActive, {})
 
       if (tokens.length > 0) {
-        const tokenMint = tokens[0].mint
+        const tokenMint = tokens[0].tokenMint
         const token = await convex.query(api.tokenStaking.getByMint, { tokenMint })
 
         expect(token).toBeDefined()
-        expect(token?.mint).toBe(tokenMint)
+        expect(token?.tokenMint).toBe(tokenMint)
       } else {
         console.log('Skipping - no tokens in database')
       }

@@ -8,13 +8,18 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import { mockX402Payment, mockX402PaymentPending, mockX402PaymentFailed } from '../../fixtures/transactions'
 
+type PaymentFixture =
+  | typeof mockX402Payment
+  | typeof mockX402PaymentPending
+  | typeof mockX402PaymentFailed
+
 // Mock component for testing
 function PaymentCard({
   payment,
   onClick,
   showDetails = false,
 }: {
-  payment: typeof mockX402Payment
+  payment: PaymentFixture
   onClick?: () => void
   showDetails?: boolean
 }) {

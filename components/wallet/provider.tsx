@@ -23,31 +23,31 @@ export function WalletProvider({ children }: WalletProviderProps) {
     // Configure clusters with custom RPC if provided
     const clusters = customRpcUrl
       ? [
-          {
-            id: 'solana:mainnet' as const,
-            label: 'Mainnet',
-            name: 'mainnet-beta' as const,
-            url: cluster === 'mainnet-beta' ? customRpcUrl : 'https://api.mainnet-beta.solana.com',
-          },
-          {
-            id: 'solana:devnet' as const,
-            label: 'Devnet',
-            name: 'devnet' as const,
-            url: cluster === 'devnet' ? customRpcUrl : 'https://api.devnet.solana.com',
-          },
-          {
-            id: 'solana:testnet' as const,
-            label: 'Testnet',
-            name: 'testnet' as const,
-            url: 'https://api.testnet.solana.com',
-          },
-        ]
+        {
+          id: 'solana:mainnet' as const,
+          label: 'Mainnet',
+          name: 'mainnet-beta' as const,
+          url: cluster === 'mainnet-beta' ? customRpcUrl : 'https://api.mainnet-beta.solana.com',
+        },
+        {
+          id: 'solana:devnet' as const,
+          label: 'Devnet',
+          name: 'devnet' as const,
+          url: cluster === 'devnet' ? customRpcUrl : 'https://api.devnet.solana.com',
+        },
+        {
+          id: 'solana:testnet' as const,
+          label: 'Testnet',
+          name: 'testnet' as const,
+          url: 'https://api.testnet.solana.com',
+        },
+      ]
       : undefined
 
     return getDefaultConfig({
       appName: 'GhostSpeak',
       appUrl: typeof window !== 'undefined' ? window.location.origin : 'https://ghostspeak.xyz',
-      autoConnect: true,
+      autoConnect: false, // Disabled to prevent race conditions with Phantom
       enableMobile: true,
       network: cluster === 'mainnet-beta' ? 'mainnet-beta' : 'devnet',
       clusters,

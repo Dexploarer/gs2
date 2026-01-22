@@ -6,8 +6,30 @@
  */
 import { vi } from 'vitest'
 
+type MockRecord = Record<string, any>
+
+type FilterPredicate = (item: MockRecord) => boolean
+type FilterQuery = (q: { eq: (a: unknown, b: unknown) => boolean }) => boolean
+
+interface QueryBuilder {
+  withIndex: (indexName: string, fn: (q: { eq: (field: string, value: unknown) => unknown }) => unknown) => QueryBuilder
+  filter: {
+    (fn: FilterPredicate): QueryBuilder
+    (fn: FilterQuery): QueryBuilder
+  }
+  order: (direction: 'asc' | 'desc') => QueryBuilder
+  take: (count: number) => QueryBuilder
+  first: () => Promise<MockRecord | null>
+  unique: () => Promise<MockRecord | null>
+  collect: () => Promise<MockRecord[]>
+  then: (
+    resolve: (value: MockRecord[]) => unknown,
+    reject?: (reason: unknown) => unknown
+  ) => Promise<unknown>
+}
+
 // Type for mock database storage
-type MockDB = Map<string, Map<string, unknown>>
+type MockDB = Map<string, Map<string, MockRecord>>
 
 // Generate unique IDs
 let idCounter = 0
@@ -23,12 +45,12 @@ export function resetIdCounter(): void {
 /**
  * Create a mock Convex query builder
  */
-function createQueryBuilder(db: MockDB, table: string) {
-  let filters: Array<(item: unknown) => boolean> = []
+function createQueryBuilder(db: MockDB, table: string): QueryBuilder {
+  let filters: Array<(item: MockRecord) => boolean> = []
   let orderDirection: 'asc' | 'desc' = 'asc'
   let limitCount: number | null = null
 
-  const builder = {
+  const builder: QueryBuilder = {
     withIndex: (_indexName: string, fn: (q: { eq: (field: string, value: unknown) => unknown }) => unknown) => {
       // Extract the filter from the index query
       let filterField: string | null = null
@@ -45,8 +67,8 @@ function createQueryBuilder(db: MockDB, table: string) {
       if (filterField) {
         const field = filterField
         const value = filterValue
-        filters.push((item: unknown) => {
-          const record = item as Record<string, unknown>
+        filters.push((item: MockRecord) => {
+          const record = item
           return record[field] === value
         })
       }
@@ -54,13 +76,13 @@ function createQueryBuilder(db: MockDB, table: string) {
       return builder
     },
 
-    filter: (fn: ((item: unknown) => boolean) | ((q: { eq: (a: unknown, b: unknown) => boolean }) => boolean)) => {
-      filters.push((item: unknown) => {
+    filter: (fn: FilterPredicate | FilterQuery) => {
+      filters.push((item: MockRecord) => {
         // Check if it's a simple predicate function (takes item as argument)
         // or a Convex-style filter (takes query builder)
         try {
           // Try calling with the item directly (simple predicate)
-          const result = fn(item)
+          const result = (fn as FilterPredicate)(item)
           if (typeof result === 'boolean') {
             return result
           }
@@ -69,9 +91,9 @@ function createQueryBuilder(db: MockDB, table: string) {
         }
 
         // Try Convex-style filter
-        return fn({
+        return (fn as FilterQuery)({
           eq: (a: unknown, b: unknown) => a === b,
-        } as unknown as Parameters<typeof fn>[0]) as boolean
+        }) as boolean
       })
       return builder
     },
@@ -110,8 +132,8 @@ function createQueryBuilder(db: MockDB, table: string) {
 
       // Apply ordering (by _creationTime)
       results.sort((a, b) => {
-        const aTime = (a as Record<string, unknown>)._creationTime as number || 0
-        const bTime = (b as Record<string, unknown>)._creationTime as number || 0
+        const aTime = a._creationTime as number || 0
+        const bTime = b._creationTime as number || 0
         return orderDirection === 'asc' ? aTime - bTime : bTime - aTime
       })
 
@@ -125,7 +147,7 @@ function createQueryBuilder(db: MockDB, table: string) {
 
     // Make the builder thenable so it can be awaited directly
     then: (
-      resolve: (value: unknown[]) => unknown,
+      resolve: (value: MockRecord[]) => unknown,
       reject?: (reason: unknown) => unknown
     ) => {
       return builder.collect().then(resolve, reject)
@@ -151,7 +173,7 @@ export function createMockConvexContext() {
         return tableData.get(id) || null
       },
 
-      insert: async (table: string, data: Record<string, unknown>) => {
+      insert: async (table: string, data: MockRecord) => {
         if (!db.has(table)) {
           db.set(table, new Map())
         }
@@ -166,19 +188,19 @@ export function createMockConvexContext() {
         return id
       },
 
-      patch: async (table: string, id: string, data: Record<string, unknown>) => {
+      patch: async (table: string, id: string, data: MockRecord) => {
         const tableData = db.get(table)
         if (!tableData) throw new Error(`Table ${table} not found`)
         const existing = tableData.get(id)
         if (!existing) throw new Error(`Record ${id} not found in ${table}`)
-        const updated = { ...existing as Record<string, unknown>, ...data }
+        const updated = { ...existing, ...data }
         tableData.set(id, updated)
       },
 
-      replace: async (table: string, id: string, data: Record<string, unknown>) => {
+      replace: async (table: string, id: string, data: MockRecord) => {
         const tableData = db.get(table)
         if (!tableData) throw new Error(`Table ${table} not found`)
-        const existing = tableData.get(id) as Record<string, unknown>
+        const existing = tableData.get(id)
         if (!existing) throw new Error(`Record ${id} not found in ${table}`)
         const replaced = {
           ...data,

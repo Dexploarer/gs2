@@ -1,95 +1,44 @@
 import Link from 'next/link'
 
-const footerLinks = {
-  product: [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/agents', label: 'Agents' },
-    { href: '/docs', label: 'Documentation' },
-  ],
-  resources: [
-    { href: 'https://github.com/ghostspeak/ghostspeak', label: 'GitHub' },
-    { href: 'https://x.com/ghostspeak_io', label: 'Twitter' },
-  ],
-  legal: [
-    { href: '/privacy', label: 'Privacy' },
-    { href: '/terms', label: 'Terms' },
-  ],
-}
-
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <span className="text-2xl">👻</span>
-              </div>
-              <span className="font-bold text-xl">GhostSpeak</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Trust Layer for AI Agent Commerce on Solana
-            </p>
+    <footer className="border-t border-border bg-background py-8">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Left - Brand */}
+          <div className="flex items-center gap-6">
+            <span className="font-mono text-sm text-foreground">GHOSTSPEAK</span>
+            <span className="text-muted-foreground">|</span>
+            <span className="text-muted-foreground text-sm">Trust Layer for AI Agents</span>
           </div>
 
-          {/* Product Links */}
-          <div>
-            <h3 className="font-semibold mb-3">Product</h3>
-            <ul className="space-y-2">
-              {footerLinks.product.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Center - Links */}
+          <div className="flex items-center gap-6 text-sm">
+            <Link href="/docs" className="text-muted-foreground hover:text-foreground transition-colors">
+              Docs
+            </Link>
+            <a
+              href="https://github.com/ghostspeak/ghostspeak"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://x.com/ghostspeak_io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Twitter
+            </a>
           </div>
 
-          {/* Resources Links */}
-          <div>
-            <h3 className="font-semibold mb-3">Resources</h3>
-            <ul className="space-y-2">
-              {footerLinks.resources.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+          {/* Right - Copyright */}
+          <div className="text-muted-foreground text-sm font-mono">
+            © 2026
           </div>
-
-          {/* Legal Links */}
-          <div>
-            <h3 className="font-semibold mb-3">Legal</h3>
-            <ul className="space-y-2">
-              {footerLinks.legal.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>&copy; 2026 GhostSpeak Labs. Built on Solana.</p>
         </div>
       </div>
     </footer>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
@@ -12,25 +12,17 @@ import { EndorsementInterface } from '@/components/agent/endorsement-interface'
 import { AttestationsList } from '@/components/agent/attestations-list'
 import { formatDistanceToNow } from 'date-fns'
 
-interface AgentProfilePageProps {
-  params: Promise<{
-    address: string
-  }>
-}
-
-export default function AgentProfilePage({ params }: AgentProfilePageProps) {
-  const [resolvedParams, setResolvedParams] = useState<{ address: string } | null>(null)
-
-  useEffect(() => {
-    params.then(setResolvedParams)
-  }, [params])
+export default function AgentProfilePage() {
+  const params = useParams()
+  const addressParam = params?.address
+  const address = Array.isArray(addressParam) ? addressParam[0] : addressParam
 
   // Always call hooks at the top level
   const agents = useQuery(api.agents.list, { limit: 1000 })
 
   // Find agent by address once params are resolved
-  const agent = resolvedParams
-    ? agents?.find((a: Doc<'agents'>) => a.address === resolvedParams.address)
+  const agent = address
+    ? agents?.find((a: Doc<'agents'>) => a.address === address)
     : null
 
   // Always call useQuery hooks with stable parameters
@@ -45,7 +37,7 @@ export default function AgentProfilePage({ params }: AgentProfilePageProps) {
     agent ? { subjectAgentId: agent._id, limit: 20 } : 'skip'
   )
 
-  if (!resolvedParams) {
+  if (!address || agents === undefined) {
     return (
       <div className="p-8">
         <div className="animate-pulse">
@@ -61,7 +53,7 @@ export default function AgentProfilePage({ params }: AgentProfilePageProps) {
       <div className="p-8">
         <h1 className="text-2xl font-bold mb-4">Agent Not Found</h1>
         <p className="text-muted-foreground">
-          No agent found with address: {resolvedParams.address}
+          No agent found with address: {address}
         </p>
       </div>
     )

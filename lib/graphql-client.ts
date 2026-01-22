@@ -7,7 +7,30 @@
  * - Server Component compatible
  */
 
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_URL || '/api/graphql';
+import { headers } from 'next/headers';
+
+async function getGraphQLEndpoint(): Promise<string> {
+  // Use environment variable if set
+  if (process.env.NEXT_PUBLIC_GRAPHQL_URL) {
+    return process.env.NEXT_PUBLIC_GRAPHQL_URL;
+  }
+
+  // For server-side rendering, construct full URL
+  if (typeof window === 'undefined') {
+    try {
+      const headersList = await headers();
+      const host = headersList.get('host');
+      const protocol = headersList.get('x-forwarded-proto') || 'http';
+      return `${protocol}://${host}/api/graphql`;
+    } catch {
+      // Fallback for environments where headers() isn't available
+      return 'http://localhost:3333/api/graphql';
+    }
+  }
+
+  // Client-side: use relative URL
+  return '/api/graphql';
+}
 
 export interface GraphQLResponse<T> {
   data?: T;
@@ -24,7 +47,8 @@ export async function graphql<T = unknown>(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<T> {
-  const response = await fetch(GRAPHQL_ENDPOINT, {
+  const endpoint = await getGraphQLEndpoint();
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -227,6 +251,22 @@ export const queries = {
       }
     }
   `,
+
+  /**
+   * Get agent transactions
+   */
+  GET_TRANSACTIONS: `
+    query GetTransactions($address: String!, $limit: Int) {
+      transactions(address: $address, limit: $limit) {
+        id
+        type
+        signature
+        blockNumber
+        timestamp
+        amount
+      }
+    }
+  `,
 };
 
 /**
@@ -271,6 +311,15 @@ export interface VoteData {
   transactionSignature?: string
 }
 
+export interface Transaction {
+  id: string
+  type: string
+  signature: string
+  blockNumber: number
+  timestamp: string
+  amount?: number
+}
+
 export interface GetAgentResponse {
   agent: AgentData | null
 }
@@ -307,6 +356,10 @@ export interface CategoryStatsResponse {
   }>
 }
 
+export interface GetTransactionsResponse {
+  transactions: Transaction[]
+}
+
 /**
  * Typed query functions (2026 pattern)
  */
@@ -341,4 +394,14 @@ export async function getTrendingAgents(limit = 10): Promise<TrendingAgentsRespo
 
 export async function getCategoryStats(): Promise<CategoryStatsResponse> {
   return graphql<CategoryStatsResponse>(queries.CATEGORY_STATS);
+}
+
+export async function getAgentTransactions(address: string, limit = 10): Promise<GetTransactionsResponse> {
+  // Mock response if query fails or for development
+  try {
+    return await graphql<GetTransactionsResponse>(queries.GET_TRANSACTIONS, { address, limit });
+  } catch (e) {
+    console.warn('Failed to fetch transactions, returning empty list', e);
+    return { transactions: [] };
+  }
 }
