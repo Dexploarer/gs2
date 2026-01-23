@@ -22,7 +22,8 @@ interface RecentPayment {
   agentId?: string
   txSignature?: string
   signature?: string
-  _creationTime: number
+  timestamp?: number
+  createdAt?: number
 }
 
 export default function PaymentAnalyticsPage() {
@@ -132,7 +133,7 @@ export default function PaymentAnalyticsPage() {
 
                     <div className="text-right">
                       <div className="text-xs text-muted-foreground mb-1">
-                        {formatDistanceToNow(payment._creationTime, { addSuffix: true })}
+                        {formatDistanceToNow(new Date(payment.timestamp || payment.createdAt || Date.now()), { addSuffix: true })}
                       </div>
                       {txSig && (
                         <a

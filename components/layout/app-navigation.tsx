@@ -20,9 +20,11 @@ const routeConfig: Record<string, { module: string; badge?: 'BETA' | 'NEW' | 'LI
 }
 
 // Sub-navigation items for different modules
-const moduleNavItems: Record<string, { href: string; label: string }[]> = {
+const moduleNavItems: Record<string, { href: string; label: string; isNew?: boolean }[]> = {
     observatory: [
         { href: '/observatory', label: 'Overview' },
+        { href: '/observatory/directory', label: 'Directory', isNew: true },
+        { href: '/observatory/verify', label: 'Verify', isNew: true },
         { href: '/observatory/facilitators', label: 'Facilitators' },
         { href: '/observatory/payments', label: 'Payments' },
         { href: '/observatory/endpoints', label: 'Endpoints' },
@@ -151,11 +153,16 @@ export function AppNavigation({
                                         key={item.href}
                                         href={item.href}
                                         className={cn(
-                                            'relative text-sm transition-colors py-2',
+                                            'relative text-sm transition-colors py-2 flex items-center gap-1.5',
                                             isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                                         )}
                                     >
                                         {item.label}
+                                        {item.isNew && (
+                                            <span className="px-1 py-0.5 text-[9px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded">
+                                                NEW
+                                            </span>
+                                        )}
                                         {isActive && (
                                             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                                         )}

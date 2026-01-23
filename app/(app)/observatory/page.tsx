@@ -240,26 +240,40 @@ export default function ObservatoryPage() {
             <ToolGrid columns={2} className="gap-2">
               <ToolCard
                 name="Directory"
-                description=""
-                href="/observatory/agents"
+                description="Browse services"
+                href="/observatory/directory"
                 className="p-4"
+                badge="NEW"
+              />
+              <ToolCard
+                name="Verify"
+                description="Test endpoints"
+                href="/observatory/verify"
+                className="p-4"
+                badge="NEW"
               />
               <ToolCard
                 name="Payments"
-                description=""
+                description="x402 activity"
                 href="/observatory/payments"
                 className="p-4"
               />
               <ToolCard
                 name="Facilitators"
-                description=""
+                description="Payment providers"
                 href="/observatory/facilitators"
                 className="p-4"
               />
               <ToolCard
-                name="Merchants"
-                description=""
-                href="/observatory/merchants"
+                name="Endpoints"
+                description="API registry"
+                href="/observatory/endpoints"
+                className="p-4"
+              />
+              <ToolCard
+                name="Agents"
+                description="Agent directory"
+                href="/observatory/agents"
                 className="p-4"
               />
             </ToolGrid>

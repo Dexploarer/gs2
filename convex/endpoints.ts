@@ -135,6 +135,266 @@ export const register = mutation({
 })
 
 /**
+ * List endpoints by category
+ */
+export const listByCategory = query({
+  args: {
+    category: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 100
+    let endpoints
+
+    if (args.category) {
+      endpoints = await ctx.db
+        .query('endpoints')
+        .withIndex('by_category', (q) => q.eq('category', args.category))
+        .take(limit)
+    } else {
+      endpoints = await ctx.db.query('endpoints').take(limit)
+    }
+
+    // Enrich with agent data
+    return Promise.all(
+      endpoints.map(async (endpoint) => {
+        if (!endpoint.agentId) return { ...endpoint, agent: null }
+        const agent = await ctx.db.get('agents', endpoint.agentId)
+        return {
+          ...endpoint,
+          agent: agent
+            ? {
+                name: agent.name,
+                address: agent.address,
+                ghostScore: agent.ghostScore,
+                tier: agent.tier,
+              }
+            : null,
+        }
+      })
+    )
+  },
+})
+
+/**
+ * Get endpoint statistics for dashboard
+ */
+export const getStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const endpoints = await ctx.db.query('endpoints').collect()
+
+    // Calculate totals
+    const totalEndpoints = endpoints.length
+    const verifiedEndpoints = endpoints.filter((e) => e.isVerified).length
+    const x402Endpoints = endpoints.filter((e) => e.protocol === 'x402').length
+    const totalCalls = endpoints.reduce((sum, e) => sum + e.totalCalls, 0)
+    const avgSuccessRate =
+      endpoints.length > 0
+        ? endpoints.reduce((sum, e) => sum + e.successRate, 0) / endpoints.length
+        : 0
+
+    // Group by category
+    const categoryStats: Record<string, { count: number; calls: number }> = {}
+    endpoints.forEach((e) => {
+      const cat = e.category || 'other'
+      if (!categoryStats[cat]) {
+        categoryStats[cat] = { count: 0, calls: 0 }
+      }
+      categoryStats[cat].count++
+      categoryStats[cat].calls += e.totalCalls
+    })
+
+    // Group by network
+    const networkStats: Record<string, { count: number; calls: number }> = {}
+    endpoints.forEach((e) => {
+      const net = e.network || 'unknown'
+      if (!networkStats[net]) {
+        networkStats[net] = { count: 0, calls: 0 }
+      }
+      networkStats[net].count++
+      networkStats[net].calls += e.totalCalls
+    })
+
+    // Price distribution
+    const priceRanges = {
+      free: endpoints.filter((e) => e.priceUSDC === 0).length,
+      micro: endpoints.filter((e) => e.priceUSDC > 0 && e.priceUSDC <= 0.001).length,
+      low: endpoints.filter((e) => e.priceUSDC > 0.001 && e.priceUSDC <= 0.01).length,
+      medium: endpoints.filter((e) => e.priceUSDC > 0.01 && e.priceUSDC <= 0.1).length,
+      high: endpoints.filter((e) => e.priceUSDC > 0.1).length,
+    }
+
+    return {
+      totalEndpoints,
+      verifiedEndpoints,
+      x402Endpoints,
+      totalCalls,
+      avgSuccessRate,
+      categoryStats,
+      networkStats,
+      priceRanges,
+    }
+  },
+})
+
+/**
+ * Get top providers (agents) by endpoint count and calls
+ */
+export const getTopProviders = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const endpoints = await ctx.db.query('endpoints').collect()
+
+    // Group by agent
+    const providerStats: Record<
+      string,
+      { agentId: string; endpointCount: number; totalCalls: number; avgSuccessRate: number }
+    > = {}
+
+    endpoints.forEach((e) => {
+      if (!e.agentId) return
+      const id = e.agentId
+      if (!providerStats[id]) {
+        providerStats[id] = {
+          agentId: id,
+          endpointCount: 0,
+          totalCalls: 0,
+          avgSuccessRate: 0,
+        }
+      }
+      providerStats[id].endpointCount++
+      providerStats[id].totalCalls += e.totalCalls
+      providerStats[id].avgSuccessRate += e.successRate
+    })
+
+    // Calculate average success rate and sort
+    const providers = Object.values(providerStats)
+      .map((p) => ({
+        ...p,
+        avgSuccessRate: p.endpointCount > 0 ? p.avgSuccessRate / p.endpointCount : 0,
+      }))
+      .sort((a, b) => b.totalCalls - a.totalCalls)
+      .slice(0, args.limit ?? 20)
+
+    // Enrich with agent data
+    return Promise.all(
+      providers.map(async (p) => {
+        const agent = await ctx.db.get('agents', p.agentId as any)
+        return {
+          ...p,
+          agent: agent
+            ? {
+                name: agent.name,
+                address: agent.address,
+                ghostScore: agent.ghostScore,
+                tier: agent.tier,
+              }
+            : null,
+        }
+      })
+    )
+  },
+})
+
+/**
+ * Search endpoints by text
+ */
+export const search = query({
+  args: {
+    query: v.string(),
+    category: v.optional(v.string()),
+    network: v.optional(v.string()),
+    minTrustScore: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50
+    const searchLower = args.query.toLowerCase()
+
+    let endpoints = await ctx.db.query('endpoints').collect()
+
+    // Filter by search term
+    if (args.query) {
+      endpoints = endpoints.filter(
+        (e) =>
+          e.name.toLowerCase().includes(searchLower) ||
+          e.description.toLowerCase().includes(searchLower) ||
+          e.url.toLowerCase().includes(searchLower) ||
+          e.capabilities.some((c) => c.toLowerCase().includes(searchLower))
+      )
+    }
+
+    // Filter by category
+    if (args.category) {
+      endpoints = endpoints.filter((e) => e.category === args.category)
+    }
+
+    // Filter by network
+    if (args.network) {
+      endpoints = endpoints.filter((e) => e.network === args.network)
+    }
+
+    // Filter by trust score
+    if (args.minTrustScore !== undefined) {
+      endpoints = endpoints.filter((e) => (e.trustScore || 0) >= args.minTrustScore!)
+    }
+
+    // Sort by trust score then success rate
+    endpoints.sort((a, b) => {
+      const aScore = (a.trustScore || 0) + a.successRate
+      const bScore = (b.trustScore || 0) + b.successRate
+      return bScore - aScore
+    })
+
+    // Limit results
+    endpoints = endpoints.slice(0, limit)
+
+    // Enrich with agent data
+    return Promise.all(
+      endpoints.map(async (endpoint) => {
+        if (!endpoint.agentId) return { ...endpoint, agent: null }
+        const agent = await ctx.db.get('agents', endpoint.agentId)
+        return {
+          ...endpoint,
+          agent: agent
+            ? {
+                name: agent.name,
+                address: agent.address,
+                ghostScore: agent.ghostScore,
+                tier: agent.tier,
+              }
+            : null,
+        }
+      })
+    )
+  },
+})
+
+/**
+ * Test an endpoint and record results
+ */
+export const testEndpoint = mutation({
+  args: {
+    endpointId: v.id('endpoints'),
+  },
+  handler: async (ctx, args) => {
+    const endpoint = await ctx.db.get('endpoints', args.endpointId)
+    if (!endpoint) throw new Error('Endpoint not found')
+
+    // Mark as being tested
+    await ctx.db.patch(args.endpointId, {
+      lastTested: Date.now(),
+      updatedAt: Date.now(),
+    })
+
+    return { url: endpoint.url, protocol: endpoint.protocol }
+  },
+})
+
+/**
  * Update endpoint stats after a call
  */
 export const updateStats = mutation({

@@ -118,7 +118,7 @@ export default function AgentProfilePage() {
                   <div className="flex-1">
                     <div className="font-medium">Received positive vote</div>
                     <div className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(agent._creationTime), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(agent.createdAt), { addSuffix: true })}
                     </div>
                   </div>
                 </div>
